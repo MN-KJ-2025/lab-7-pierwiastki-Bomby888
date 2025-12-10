@@ -13,7 +13,7 @@ import numpy.polynomial.polynomial as nppoly
 
 def roots_20(coef: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
     """Funkcja wyznaczająca miejsca zerowe wielomianu funkcją
-    `nppoly.polyroots()`, najpierw lekko zaburzając wejściowe współczynniki 
+    nppoly.polyroots(), najpierw lekko zaburzając wejściowe współczynniki 
     wielomianu (N(0,1) * 1e-10).
 
     Args:
@@ -23,12 +23,18 @@ def roots_20(coef: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
         (tuple[np.ndarray, np. ndarray]):
             - Zaburzony wektor współczynników (n,),
             - Wektor miejsc zerowych (m,).
-        Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
+        Jeżeli dane wejściowe są niepoprawne funkcja zwraca None.
     """
+    if not isinstance(coef, np.ndarray):
+        return None
+    if coef.ndim != 1:
+        return None
+    if coef.size < 2:
+        return None
     
-    
-    pass
-
+    wspol = coef + (10**(-10)*np.random.random(len(coef)))
+    zer = nppoly.polyroots(wspol)
+    return wspol, zer
 
 def frob_a(coef: np.ndarray) -> np.ndarray | None:
     """Funkcja służąca do wyznaczenia macierzy Frobeniusa na podstawie
@@ -50,19 +56,44 @@ def frob_a(coef: np.ndarray) -> np.ndarray | None:
         (np.ndarray): Macierz Frobeniusa o rozmiarze (n,n).
         Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
     """
-    pass
+    if not isinstance(coef, np.ndarray):
+        return None
+    if coef.ndim != 1 or coef.size < 2:
+        return None
+
+    coef = coef.astype(float)
+    a_n = coef[0]
+    if a_n == 0:
+        return None
+
+    n = coef.size - 1
+    F = np.zeros((n, n))
+
+    # jedynki nad diagonalą
+    if n > 1:
+        F[np.arange(n - 1), np.arange(1, n)] = 1.0
+
+
+    last_row = -coef[1:] / a_n
+    F[-1, :] = last_row[::-1]
+
+
+    return F
 
 
 def is_nonsingular(A: np.ndarray) -> bool | None:
-    """Funkcja sprawdzająca czy podana macierz NIE JEST singularna. Przy
-    implementacji należy pamiętać o definicji zera maszynowego.
 
-    Args:
-        A (np.ndarray): Macierz (n,n) do przetestowania.
+    if not isinstance(A, np.ndarray):
+        return None
+    if A.ndim != 2:
+        return None
+    if A.shape[0] != A.shape[1]:
+        return None
 
-    Returns:
-        (bool): `True`, jeżeli macierz A nie jest singularna, w przeciwnym 
-            wypadku `False`.
-        Jeżeli dane wejściowe są niepoprawne funkcja zwraca `None`.
-    """
-    pass
+    try:
+        det = np.linalg.det(A)
+    except Exception:
+        return None
+
+    eps = np.finfo(float).eps
+    return abs(det) > eps
